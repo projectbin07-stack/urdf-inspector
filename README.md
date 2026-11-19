@@ -65,12 +65,13 @@ what the file describes.
 
 ## Screenshots
 
-These are captures of the live demo in headless Microsoft Edge.
+These are captures of the live demo in headless Microsoft Edge (the phone view
+in a 390 px wide frame).
 
-|                                                                                                               |                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| ![Broken example in light mode with the error list and the flat wheel](docs/img/broken-light.png)             | ![Two-joint arm in wireframe with the elbow selected and the sliders moved](docs/img/arm-fk-dark.png) |
-| The deliberately broken example: 7 errors and 14 warnings. The unrotated left wheel lies flat in the 3D view. | The two-joint arm in wireframe, joints moved with the sliders, elbow joint details.                   |
+|                                                                                                               |                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| ![Broken example in light mode with the error list and the flat wheel](docs/img/broken-light.png)             | ![Two-joint arm in wireframe with the elbow selected and the sliders moved](docs/img/arm-fk-dark.png)                         |
+| The deliberately broken example: 7 errors and 14 warnings. The unrotated left wheel lies flat in the 3D view. | The two-joint arm in wireframe at shoulder -0.9 rad and elbow -0.6 rad (set by the sliders or the link), elbow joint details. |
 
 ![Differential-drive example at phone width](docs/img/phone-light.png)
 
