@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>URDF Inspector</title>
+    <meta
+      name="description"
+      content="Load a URDF in the browser, find the mistakes that make robots misbehave in RViz, Gazebo and ros2_control, and see the kinematic tree, a 3D view and forward kinematics. The file never leaves your computer."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 13 8 8m0 0 5-5M8 8V2' stroke='%232a78d6' stroke-width='2' fill='none'/%3E%3Ccircle cx='8' cy='8' r='2' fill='%23eb6834'/%3E%3C/svg%3E"
+    />
+    <script type="module" src="src/ui/app.js"></script>
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>URDF Inspector</h1>
+        <p class="tagline">
+          Find the mistakes in a URDF that make a robot behave strangely in RViz, Gazebo or
+          ros2_control, and see its structure. Your file is read in this browser and is never
+          uploaded.
+        </p>
+      </div>
+      <nav>
+        <a href="https://github.com/projectbin07-stack/urdf-inspector">Source and docs</a>
+        <button type="button" id="btn-link" title="Copy a link to this view">Copy link</button>
+        <button type="button" id="btn-theme" title="Switch between automatic, light and dark">
+          Theme: auto
+        </button>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="panel input" aria-label="Model">
+        <div class="input-row">
+          <label class="drop" id="drop">
+            <input type="file" id="file" accept=".urdf,.xml,.txt,text/xml,application/xml" />
+            <strong>Drop a URDF here</strong> or click to choose one.
+            <span class="muted">Plain URDF only: run <code>xacro</code> first.</span>
+          </label>
+          <div class="samples">
+            <label class="row"
+              ><span>Or open an example</span>
+              <select id="example"></select>
+            </label>
+            <p class="note" id="example-note"></p>
+          </div>
+        </div>
+        <details id="paste-box">
+          <summary>Paste XML</summary>
+          <textarea
+            id="paste"
+            rows="8"
+            spellcheck="false"
+            aria-label="URDF XML"
+            placeholder='<robot name="my_robot"> ... </robot>'
+          ></textarea>
+          <button type="button" id="btn-paste">Inspect pasted XML</button>
+        </details>
+        <p class="status" id="status" role="status">loading</p>
+        <p class="summary" id="summary"></p>
+      </section>
+
+      <section class="panel findings" aria-label="Findings">
+        <div class="panel-head">
+          <h2>Findings</h2>
+          <div class="filters" role="group" aria-label="Show severities">
+            <label><input type="checkbox" id="f-error" checked /> errors</label>
+            <label><input type="checkbox" id="f-warning" checked /> warnings</label>
+            <label><input type="checkbox" id="f-info" checked /> notes</label>
+          </div>
+        </div>
+        <ol class="finding-list" id="findings"></ol>
+      </section>
+
+      <section class="panel view" aria-label="3D view">
+        <div class="panel-head">
+          <h2>3D view</h2>
+          <div class="view-controls">
+            <label
+              ><span class="sr">Shape</span>
+              <select id="view-mode">
+                <option value="solid">Solid</option>
+                <option value="wire">Wireframe</option>
+              </select></label
+            >
+            <label
+              ><span class="sr">Geometry</span>
+              <select id="geom-mode">
+                <option value="visual">Visual</option>
+                <option value="collision">Collision</option>
+              </select></label
+            >
+            <label><input type="checkbox" id="show-frames" checked /> frames</label>
+            <label><input type="checkbox" id="show-com" checked /> COM</label>
+            <button type="button" id="btn-reset-view" title="Reset the camera">Reset view</button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas
+            id="view3d"
+            aria-label="3D view of the robot; drag to orbit, wheel or pinch to zoom"
+          ></canvas>
+        </div>
+        <p class="muted small" id="view-note">
+          Drag to orbit, wheel or pinch to zoom, double-click to reset. Box, cylinder and sphere
+          shapes are drawn; meshes are not loaded and show as a marker. Frame axes: x red, y green,
+          z blue.
+        </p>
+        <div class="sliders" id="sliders"></div>
+      </section>
+
+      <section class="panel tree" aria-label="Kinematic tree">
+        <div class="panel-head">
+          <h2>Kinematic tree</h2>
+          <div>
+            <button type="button" id="btn-expand">Expand all</button>
+          </div>
+        </div>
+        <div class="tree-wrap" id="tree"></div>
+      </section>
+
+      <section class="panel details" aria-label="Details">
+        <h2 id="details-title">Details</h2>
+        <div id="details">
+          <p class="muted">Select a link or joint in the tree, the 3D view or a finding.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        urdf-inspector checks are documented in
+        <a href="https://github.com/projectbin07-stack/urdf-inspector/blob/main/docs/checks.md"
+          >docs/checks.md</a
+        >
+        with their sources (URDF XML specification, REP 103, REP 105, urdfdom, kdl_parser,
+        sdformat). It recognises <code>&lt;ros2_control&gt;</code> and
+        <code>&lt;gazebo&gt;</code> blocks but never runs them. No xacro, mesh loading or SDF.
+      </p>
+    </footer>
+  </body>
+</html>
