@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<!--
+  EXAMPLE MODEL written for urdf-inspector. Not modelled on any commercial
+  robot; dimensions and masses are made up but physically consistent.
+
+  A round differential-drive base: two wheels on one axle through base_link
+  (radius 0.033 m, separation 0.23 m), a rear ball caster on a fixed joint,
+  and a 2D LiDAR on top.
+-->
+<robot name="example_diff_drive_base">
+
+  <material name="white"><color rgba="0.9 0.9 0.88 1"/></material>
+  <material name="dark"><color rgba="0.15 0.15 0.17 1"/></material>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.033" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <mass value="1.2"/>
+      <inertia ixx="0.00336" ixy="0" ixz="0" iyy="0.00336" iyz="0" izz="0.006"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.10" length="0.06"/></geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.10" length="0.06"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin xyz="0 0.115 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="0.5" velocity="15"/>
+  </joint>
+  <link name="left_wheel">
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0000149625" ixy="0" ixz="0" iyy="0.000027225" iyz="0" izz="0.0000149625"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.033" length="0.018"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.033" length="0.018"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <origin xyz="0 -0.115 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="0.5" velocity="15"/>
+  </joint>
+  <link name="right_wheel">
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0000149625" ixy="0" ixz="0" iyy="0.000027225" iyz="0" izz="0.0000149625"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.033" length="0.018"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.033" length="0.018"/></geometry>
+    </collision>
+  </link>
+
+  <!-- Ball caster: a fixed sphere whose bottom touches the floor. -->
+  <joint name="caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_link"/>
+    <origin xyz="-0.08 0 -0.018" rpy="0 0 0"/>
+  </joint>
+  <link name="caster_link">
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="0.0000009" ixy="0" ixz="0" iyy="0.0000009" iyz="0" izz="0.0000009"/>
+    </inertial>
+    <visual>
+      <geometry><sphere radius="0.015"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <geometry><sphere radius="0.015"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 0.09" rpy="0 0 0"/>
+  </joint>
+  <link name="lidar_link">
+    <inertial>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <mass value="0.17"/>
+      <inertia ixx="0.0000747" ixy="0" ixz="0" iyy="0.0000747" iyz="0" izz="0.000104"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+    </collision>
+  </link>
+
+  <ros2_control name="DiffDriveSystem" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+    </hardware>
+    <joint name="left_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="right_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+</robot>

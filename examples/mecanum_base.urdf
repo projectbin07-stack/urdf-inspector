@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+<!--
+  EXAMPLE MODEL written for urdf-inspector. Not modelled on any commercial
+  robot; dimensions and masses are made up but physically consistent.
+
+  A small four-wheel mecanum base with a 2D LiDAR, a camera with an optical
+  frame and an IMU. base_footprint is on the floor, base_link at axle height.
+  Wheels: radius 0.04 m, lx = 0.10 m, ly = 0.13 m. Inertias are the
+  solid-body values for each primitive.
+-->
+<robot name="example_mecanum_base">
+
+  <material name="grey"><color rgba="0.55 0.57 0.6 1"/></material>
+  <material name="dark"><color rgba="0.15 0.15 0.17 1"/></material>
+  <material name="blue"><color rgba="0.16 0.47 0.84 1"/></material>
+
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.04" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <mass value="3.0"/>
+      <inertia ixx="0.013" ixy="0" ixz="0" iyy="0.0234" iyz="0" izz="0.0346"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><box size="0.30 0.22 0.06"/></geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><box size="0.30 0.22 0.06"/></geometry>
+    </collision>
+  </link>
+
+  <!-- Wheels: cylinder axis rotated onto the link y axis; joints spin about +y,
+       so a positive velocity drives the robot forward on every wheel. -->
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_left_wheel"/>
+    <origin xyz="0.10 0.13 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1.5" velocity="20"/>
+    <dynamics damping="0.001" friction="0.0"/>
+  </joint>
+  <link name="front_left_wheel">
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00007125" ixy="0" ixz="0" iyy="0.00012" iyz="0" izz="0.00007125"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_right_wheel"/>
+    <origin xyz="0.10 -0.13 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1.5" velocity="20"/>
+    <dynamics damping="0.001" friction="0.0"/>
+  </joint>
+  <link name="front_right_wheel">
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00007125" ixy="0" ixz="0" iyy="0.00012" iyz="0" izz="0.00007125"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_left_wheel"/>
+    <origin xyz="-0.10 0.13 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1.5" velocity="20"/>
+    <dynamics damping="0.001" friction="0.0"/>
+  </joint>
+  <link name="rear_left_wheel">
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00007125" ixy="0" ixz="0" iyy="0.00012" iyz="0" izz="0.00007125"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_right_wheel"/>
+    <origin xyz="-0.10 -0.13 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1.5" velocity="20"/>
+    <dynamics damping="0.001" friction="0.0"/>
+  </joint>
+  <link name="rear_right_wheel">
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.00007125" ixy="0" ixz="0" iyy="0.00012" iyz="0" izz="0.00007125"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/>
+      <geometry><cylinder radius="0.04" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <!-- 2D LiDAR: lidar_link is the scan plane, 3 cm above the top plate. -->
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0.08 0 0.09" rpy="0 0 0"/>
+  </joint>
+  <link name="lidar_link">
+    <inertial>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <mass value="0.17"/>
+      <inertia ixx="0.0000747" ixy="0" ixz="0" iyy="0.0000747" iyz="0" izz="0.000104"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+      <material name="dark"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.035" length="0.04"/></geometry>
+    </collision>
+  </link>
+
+  <!-- Camera on the front face. camera_link follows REP 103 (x forward);
+       camera_optical_frame is z forward, x right, y down for image data. -->
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.17 0 0.045" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_link">
+    <inertial>
+      <origin xyz="-0.01 0 0" rpy="0 0 0"/>
+      <mass value="0.06"/>
+      <inertia ixx="0.000035125" ixy="0" ixz="0" iyy="0.000005125" iyz="0" izz="0.000034"/>
+    </inertial>
+    <visual>
+      <origin xyz="-0.01 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.02 0.08 0.025"/></geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.01 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.02 0.08 0.025"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.5707963267948966 0 -1.5707963267948966"/>
+  </joint>
+  <link name="camera_optical_frame"/>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0.03" rpy="0 0 0"/>
+  </joint>
+  <link name="imu_link"/>
+
+  <ros2_control name="MecanumBaseSystem" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+    </hardware>
+    <joint name="front_left_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="front_right_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="rear_left_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="rear_right_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+  <gazebo reference="lidar_link">
+    <sensor name="lidar" type="ray">
+      <update_rate>10</update_rate>
+    </sensor>
+  </gazebo>
+
+</robot>
