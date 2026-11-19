@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ["22", "24"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dev tools
+        run: npm ci
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Type check (JSDoc, strict)
+        run: npm run typecheck
+
+      - name: Test with coverage thresholds
+        run: npm run coverage
+
+      - name: CLI smoke test
+        shell: bash
+        run: |
+          B=bin/urdf-inspector.js
+          node $B --version
+          node $B check examples/mecanum_base.urdf --strict
+          node $B check examples/arm_2dof.urdf --strict
+          node $B check examples/diff_drive_base.urdf --strict
+          # The broken example must fail with exit code 2.
+          set +e
+          node $B check examples/broken_robot.urdf --json > broken.json
+          code=$?
+          set -e
+          test "$code" -eq 2
+          node -e "const j = require('./broken.json'); if (j.summary.errors !== 7 || !j.findings.some(f => f.id === 'inertia-triangle')) process.exit(1)"
+          # Same input, same bytes.
+          node $B check examples/broken_robot.urdf --json > again.json || true
+          cmp again.json broken.json
+          node $B tree examples/mecanum_base.urdf
+          node $B fk examples/arm_2dof.urdf --joint shoulder_joint=0.5 --joint elbow_joint=0.3 | grep -E '^tool0 +0\.1677 +0\.0916 +0\.2409'
+          node $B export-mecanum examples/mecanum_base.urdf | grep -q '^half_width = 0.13 '
+
+  browser:
+    name: Browser smoke test (headless Chrome)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Load the page with each example and check the results in the DOM
+        run: |
+          node scripts/serve.js &
+          sleep 1
+          dump() {
+            google-chrome --headless=new --disable-gpu --no-sandbox \
+              --virtual-time-budget=15000 --dump-dom "http://127.0.0.1:8000/$1" > "$2"
+            grep -o 'id="status"[^<]*' "$2"
+            grep -o 'id="summary"[^<]*' "$2"
+          }
+          dump "" mecanum.html
+          grep -q 'ready: example mecanum' mecanum.html
+          grep -q "robot 'example_mecanum_base': 10 links, 9 joints, root base_footprint · 0 error(s), 0 warning(s), 3 note(s)" mecanum.html
+          grep -q 'class="finding info' mecanum.html
+          dump "?s=broken" broken.html
+          grep -q '7 error(s), 14 warning(s), 2 note(s)' broken.html
+          grep -q 'inertia-triangle' broken.html
+          grep -q 'spare_link' broken.html
+          dump "?s=arm&sel=j:elbow_joint&q=elbow_joint:-0.6" arm.html
+          grep -q 'Joint elbow_joint' arm.html
+          grep -q -- '-0.6000 rad' arm.html
+          dump "?s=diff" diff.html
+          grep -q 'wheel separation 0.23 m' diff.html

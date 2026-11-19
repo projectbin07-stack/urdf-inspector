@@ -1,0 +1,54 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Run the tests before publishing
+        run: npm test
+      - name: Assemble the static site
+        # The site is the HTML, the CSS, the browser modules and the example
+        # models, unbundled. src/cli.js is Node-only and not shipped.
+        run: |
+          mkdir -p _site/src/core/checks _site/src/ui _site/examples
+          cp index.html styles.css _site/
+          cp src/core/*.js _site/src/core/
+          cp src/core/checks/*.js _site/src/core/checks/
+          cp src/ui/*.js _site/src/ui/
+          cp examples/*.urdf _site/examples/
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
