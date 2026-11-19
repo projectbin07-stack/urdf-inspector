@@ -1,0 +1,12 @@
+node_modules/
+coverage/
+*.log
+.DS_Store
+out/
+_site/
+# Models you inspect locally stay local; only the bundled examples and test fixtures are tracked
+*.urdf
+*.xacro
+!examples/*.urdf
+!tests/fixtures/*.urdf
+*.toml

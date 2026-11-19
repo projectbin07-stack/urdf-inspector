@@ -1,0 +1,28 @@
+{
+  "name": "urdf-inspector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Check a URDF for the mistakes that make robots misbehave in RViz, Gazebo and ros2_control, and see its kinematic structure.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-exclude=\"tests/**\" --test-coverage-exclude=\"src/ui/app.js\" --test-coverage-exclude=\"src/ui/view3d.js\" --test-coverage-exclude=\"src/ui/treeview.js\" --test-coverage-lines=90 --test-coverage-functions=90 --test-coverage-branches=80 \"tests/*.test.js\"",
+    "typecheck": "tsc -p .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "serve": "node scripts/serve.js",
+    "check": "npm run format:check && npm run typecheck && npm run coverage"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "prettier": "3.10.1",
+    "typescript": "7.0.2"
+  },
+  "bin": {
+    "urdf-inspector": "bin/urdf-inspector.js"
+  }
+}
