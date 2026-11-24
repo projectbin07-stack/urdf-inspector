@@ -4,6 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-24
+
+### Fixed
+
+- The inertia plausibility check in 0.1.0 compared sorted principal moments
+  only, so an inertia tensor that was not rotated together with its geometry
+  passed without any finding. Example: a wheel cylinder (r = 0.04 m,
+  h = 0.03 m, 1 kg) rolled with `rpy="1.5708 0 0"` in `<collision>` while
+  `<inertial>` keeps `ixx = iyy = 0.00045, izz = 0.0008`; the axis moment
+  belongs on `iyy`. The new `inertia-axes` warning compares principal axes
+  in the `<inertial>` frame (reference rotated by the shape origin and the
+  inertial origin rpy) and reports axes more than 10 degrees apart. Axes
+  whose moment is within 10% of another moment (sphere, cube, a cylinder's
+  side axes) are not compared.
+
+### Added
+
+- `symEigen` in `src/core/math.js`; `principalAxisMismatch`, `AXIS_GAP`
+  and `AXIS_ANGLE_TOL_DEG` in `src/core/inertia.js`. Existing exports are
+  unchanged.
+
 ## [0.1.0] - 2026-11-19
 
 First release. The checks are tested on the bundled example models, minimal
@@ -37,4 +58,5 @@ RViz or Gazebo across a wide set of real robot descriptions.
 - Four example URDFs written for this project (mecanum base, two-joint arm,
   differential-drive base, deliberately broken robot).
 
+[0.1.1]: https://github.com/projectbin07-stack/urdf-inspector/releases/tag/v0.1.1
 [0.1.0]: https://github.com/projectbin07-stack/urdf-inspector/releases/tag/v0.1.0

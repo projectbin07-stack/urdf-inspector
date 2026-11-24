@@ -286,7 +286,7 @@ export), **3** usage or file error.
 ```json
 {
   "tool": "urdf-inspector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "file": "examples/arm_2dof.urdf",
   "summary": {
     "name": "example_arm_2dof",

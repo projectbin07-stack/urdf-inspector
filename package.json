@@ -1,6 +1,6 @@
 {
   "name": "urdf-inspector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Check a URDF for the mistakes that make robots misbehave in RViz, Gazebo and ros2_control, and see its kinematic structure.",
   "license": "MIT",
