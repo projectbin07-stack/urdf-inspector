@@ -2,7 +2,13 @@
 // conversion drops.
 
 import { finding } from "../findings.js";
-import { inertiaValidity, primitiveInertia, rotateTensor, volume } from "../inertia.js";
+import {
+  inertiaValidity,
+  principalAxisMismatch,
+  primitiveInertia,
+  rotateTensor,
+  volume,
+} from "../inertia.js";
 import { fmt, singlePrimitive } from "./context.js";
 
 /** @typedef {import("./context.js").Context} Context */
@@ -101,16 +107,42 @@ export function checkInertia(ctx) {
     if (!(rv.principal[0] > 0)) continue;
     const ratios = v.principal.map((p, k) => p / rv.principal[k]);
     const worst = ratios.reduce((a, b) => (Math.abs(Math.log(b)) > Math.abs(Math.log(a)) ? b : a));
+    // Reference tensor in the <inertial> frame: rotated by the shape origin
+    // into the link frame, then into the inertial origin's frame.
+    const reference = rotateTensor(ref, shape.origin.rpy, inert.origin.rpy);
+    const r = reference;
+    const refText = `reference ixx=${fmt(r.ixx)} ixy=${fmt(r.ixy)} ixz=${fmt(r.ixz)} iyy=${fmt(r.iyy)} iyz=${fmt(r.iyz)} izz=${fmt(r.izz)}`;
     if (worst > INERTIA_RATIO || worst < 1 / INERTIA_RATIO) {
-      const reference = rotateTensor(ref, shape.origin.rpy, inert.origin.rpy);
-      const r = reference;
       add(
         "inertia-implausible",
         "warning",
         `link '${link.name}' principal moments ${pm} are up to ${fmt(worst > 1 ? worst : 1 / worst)}x ${worst > 1 ? "larger" : "smaller"} than a solid ${g.type} of ${fmt(m)} kg (${rv.principal.map(fmt).join(", ")}); ` +
-          `reference ixx=${fmt(r.ixx)} ixy=${fmt(r.ixy)} ixz=${fmt(r.ixz)} iyy=${fmt(r.iyy)} iyz=${fmt(r.iyz)} izz=${fmt(r.izz)}`,
+          refText,
         tp,
         { reference, principal: v.principal, referencePrincipal: rv.principal },
+      );
+      continue;
+    }
+    const mis = principalAxisMismatch(inert.inertia, reference);
+    if (mis) {
+      /** @param {import("../math.js").Vec3} a */
+      const vec = (a) => `(${a.map((x) => fmt(Number(x.toFixed(4)) + 0)).join(", ")})`;
+      add(
+        "inertia-axes",
+        "warning",
+        `link '${link.name}' inertia is not rotated with its ${g.type} geometry: ` +
+          `the principal axis of moment ${fmt(mis.moment)} is along ${vec(mis.axis)} in the <inertial> frame, ` +
+          `but a solid ${g.type}'s (${fmt(mis.referenceMoment)}) is along ${vec(mis.referenceAxis)}, ` +
+          `${Math.round(mis.angleDeg)} deg apart; ${refText}`,
+        tp,
+        {
+          reference,
+          principal: v.principal,
+          referencePrincipal: rv.principal,
+          angleDeg: mis.angleDeg,
+          axis: mis.axis,
+          referenceAxis: mis.referenceAxis,
+        },
       );
     }
   }

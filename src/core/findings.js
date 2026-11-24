@@ -330,6 +330,12 @@ export const CHECKS = {
     title: "Inertia far from the value implied by mass and geometry",
     why: "For a link with a single primitive shape the solid-body inertia is known. Principal moments ten times larger or smaller than that usually mean placeholder values (all 1.0), a unit error, or the wrong formula, and make the link spin too easily or too sluggishly in simulation.",
   },
+  "inertia-axes": {
+    group: "inertia",
+    severity: "warning",
+    title: "Inertia not rotated with the geometry",
+    why: "The principal moments match the link's single primitive shape, but a principal axis points elsewhere: typically a wheel cylinder rotated by rpy in <visual>/<collision> while <inertial> keeps the unrotated tensor. The simulated wheel then resists spinning about the wrong axis.",
+  },
   "density-implausible": {
     group: "inertia",
     severity: "warning",

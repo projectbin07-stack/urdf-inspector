@@ -34,6 +34,16 @@ const armInertia = (inertia) =>
       `<link name="arm"><inertial><mass value="1"/><inertia ${inertia}/></inertial>${BOX_SHAPES}</link>` +
       joint("j", "revolute", "base_link", "arm", `<axis xyz="0 0 1"/>${LIMIT}`),
   );
+const YAWED_BOX =
+  '<origin rpy="0 0 1.5707963267948966"/><geometry><box size="0.4 0.2 0.1"/></geometry>';
+/** @param {string} inertia */
+const yawedBox = (inertia) =>
+  robot(
+    BASE +
+      `<link name="arm"><inertial><mass value="2"/><inertia ${inertia}/></inertial>` +
+      `<visual>${YAWED_BOX}</visual><collision>${YAWED_BOX}</collision></link>` +
+      joint("j", "revolute", "base_link", "arm", `<axis xyz="0 0 1"/>${LIMIT}`),
+  );
 /** @param {string} geometry */
 const meshLink = (geometry) =>
   linkWith(
@@ -342,6 +352,11 @@ const CASES = {
   "inertia-implausible": {
     fail: armInertia('ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"'),
     pass: armInertia('ixx="0.0016667" ixy="0" ixz="0" iyy="0.0016667" iyz="0" izz="0.0016667"'),
+  },
+  "inertia-axes": {
+    // A 0.4 x 0.2 x 0.1 box yawed 90 deg in its shapes; the tensor must follow it.
+    fail: yawedBox('ixx="0.0083333" ixy="0" ixz="0" iyy="0.028333" iyz="0" izz="0.033333"'),
+    pass: yawedBox('ixx="0.028333" ixy="0" ixz="0" iyy="0.0083333" iyz="0" izz="0.033333"'),
   },
   "density-implausible": {
     fail: robot(

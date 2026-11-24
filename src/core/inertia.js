@@ -1,5 +1,6 @@
 // Inertia tensors: validity (positive definite, triangle inequality on the
-// principal moments) and reference values for solid primitives.
+// principal moments), reference values for solid primitives, and the
+// orientation comparison of a tensor with its reference.
 //
 // Solid-body moments about the centroid (shape axes as in URDF: a cylinder
 // is along its local z axis, a box has full side lengths size = (a, b, c)):
@@ -7,10 +8,32 @@
 //   cylinder  Ixx = Iyy = m (3 r^2 + h^2) / 12, Izz = m r^2 / 2
 //   sphere    Ixx = Iyy = Izz = 2 m r^2 / 5
 
-import { mul3, rpyToMatrix, symEigenvalues, transpose3 } from "./math.js";
+import { dot, mul3, rpyToMatrix, symEigen, symEigenvalues, transpose3 } from "./math.js";
 
 /** Relative tolerance of the triangle test: values rounded to six significant digits pass. */
 export const TRIANGLE_TOL = 1e-5;
+
+/**
+ * A principal axis is compared only when its moment differs from both other
+ * moments by at least this fraction of the largest moment, in the declared
+ * tensor and in the reference. Below that the axis is (nearly) degenerate:
+ * a sphere, a cube, a cylinder about its own axis, or a cylinder with
+ * h = sqrt(3) r, whose principal axes are not determined by the shape.
+ */
+export const AXIS_GAP = 0.1;
+
+/** Largest angle, in degrees, between matching principal axes that is accepted. */
+export const AXIS_ANGLE_TOL_DEG = 10;
+
+/**
+ * @typedef {object} AxisMismatch
+ * @property {0 | 1 | 2} rank index of the axis in ascending moment order
+ * @property {number} angleDeg angle between the declared and reference axis, 0..90
+ * @property {number} moment declared principal moment of that axis
+ * @property {number} referenceMoment reference principal moment of that axis
+ * @property {Vec3} axis declared principal axis (unit, largest component positive)
+ * @property {Vec3} referenceAxis reference principal axis (unit, largest component positive)
+ */
 
 /** @typedef {import("./math.js").Mat3} Mat3 */
 /** @typedef {import("./math.js").Vec3} Vec3 */
@@ -126,4 +149,50 @@ export function rotateTensor(t, rpyS, rpyF) {
     iyz: clean((m[5] + m[7]) / 2),
     izz: clean(sym.izz),
   };
+}
+
+/** @param {Vec3} v @returns {Vec3} sign chosen so the largest component is positive */
+const canonicalAxis = (v) => {
+  const big = v.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a));
+  const s = big < 0 ? -1 : 1;
+  return [v[0] * s + 0, v[1] * s + 0, v[2] * s + 0];
+};
+
+/**
+ * Compare the principal axes of a declared tensor with those of a reference
+ * tensor expressed in the same frame. Axes are matched by rank (smallest,
+ * middle, largest moment), and only axes that are well separated (AXIS_GAP)
+ * in both tensors are compared, so degenerate shapes never report. Returns
+ * the worst axis if it is more than AXIS_ANGLE_TOL_DEG off, otherwise null.
+ * @param {InertiaTensor} declared
+ * @param {InertiaTensor} reference
+ * @returns {AxisMismatch | null}
+ */
+export function principalAxisMismatch(declared, reference) {
+  const d = symEigen(tensorToMatrix(declared));
+  const r = symEigen(tensorToMatrix(reference));
+  /** @param {Vec3} ev @param {number} k */
+  const separated = (ev, k) => {
+    const top = Math.max(Math.abs(ev[0]), Math.abs(ev[1]), Math.abs(ev[2]));
+    if (!(top > 0)) return false;
+    const gap = Math.min(...[0, 1, 2].filter((j) => j !== k).map((j) => Math.abs(ev[k] - ev[j])));
+    return gap >= AXIS_GAP * top;
+  };
+  /** @type {AxisMismatch | null} */
+  let worst = null;
+  for (const k of /** @type {const} */ ([0, 1, 2])) {
+    if (!separated(d.values, k) || !separated(r.values, k)) continue;
+    const c = Math.min(1, Math.abs(dot(d.vectors[k], r.vectors[k])));
+    const angleDeg = (Math.acos(c) * 180) / Math.PI;
+    if (worst === null || angleDeg > worst.angleDeg)
+      worst = {
+        rank: k,
+        angleDeg,
+        moment: d.values[k],
+        referenceMoment: r.values[k],
+        axis: canonicalAxis(d.vectors[k]),
+        referenceAxis: canonicalAxis(r.vectors[k]),
+      };
+  }
+  return worst !== null && worst.angleDeg > AXIS_ANGLE_TOL_DEG ? worst : null;
 }

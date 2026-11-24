@@ -186,5 +186,65 @@ export function symEigenvalues(S) {
   return [ev[0], ev[1], ev[2]];
 }
 
+/**
+ * Eigenvalues and unit eigenvectors of a symmetric 3x3 matrix by cyclic
+ * Jacobi rotations, sorted by ascending eigenvalue: vectors[k] belongs to
+ * values[k]. Within a repeated eigenvalue the vectors are one arbitrary
+ * orthonormal basis of the eigenspace.
+ * @param {Mat3} S
+ * @returns {{ values: Vec3, vectors: [Vec3, Vec3, Vec3] }}
+ */
+export function symEigen(S) {
+  const a = [
+    [S[0], S[1], S[2]],
+    [S[3], S[4], S[5]],
+    [S[6], S[7], S[8]],
+  ];
+  const v = [
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ];
+  for (let sweep = 0; sweep < 50; sweep++) {
+    const off = Math.abs(a[0][1]) + Math.abs(a[0][2]) + Math.abs(a[1][2]);
+    const scaleRef = Math.abs(a[0][0]) + Math.abs(a[1][1]) + Math.abs(a[2][2]);
+    if (off <= 1e-15 * scaleRef || off === 0) break;
+    for (const [p, q] of [
+      [0, 1],
+      [0, 2],
+      [1, 2],
+    ]) {
+      if (a[p][q] === 0) continue;
+      const theta = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+      const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+      const c = 1 / Math.sqrt(t * t + 1);
+      const s = t * c;
+      for (let k = 0; k < 3; k++) {
+        const akp = a[k][p];
+        const akq = a[k][q];
+        a[k][p] = c * akp - s * akq;
+        a[k][q] = s * akp + c * akq;
+        const vkp = v[k][p];
+        const vkq = v[k][q];
+        v[k][p] = c * vkp - s * vkq;
+        v[k][q] = s * vkp + c * vkq;
+      }
+      for (let k = 0; k < 3; k++) {
+        const apk = a[p][k];
+        const aqk = a[q][k];
+        a[p][k] = c * apk - s * aqk;
+        a[q][k] = s * apk + c * aqk;
+      }
+    }
+  }
+  const order = [0, 1, 2].sort((i, j) => a[i][i] - a[j][j]);
+  /** @param {number} i @returns {Vec3} */
+  const col = (i) => [v[0][i], v[1][i], v[2][i]];
+  return {
+    values: [a[order[0]][order[0]], a[order[1]][order[1]], a[order[2]][order[2]]],
+    vectors: [col(order[0]), col(order[1]), col(order[2])],
+  };
+}
+
 /** Round to `digits` significant digits for stable printing. @param {number} v @param {number} [digits] */
 export const sig = (v, digits = 6) => (v === 0 ? 0 : Number(v.toPrecision(digits)));
