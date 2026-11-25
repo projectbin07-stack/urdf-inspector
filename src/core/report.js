@@ -55,17 +55,27 @@ export function summaryLines(r) {
 }
 
 /**
+ * The CLI's default location: " (line N)", or nothing when the line is unknown.
+ * @param {import("./findings.js").Finding} f
+ */
+export const lineLocation = (f) => (f.line ? `  (line ${f.line})` : "");
+
+/**
  * @param {Report} r
  * @param {string} file
+ * @param {{ location?: (f: import("./findings.js").Finding) => string }} [options]
+ *   `location` formats where a finding is, after its id (default lineLocation;
+ *   for example `  ${f.source}:${f.line}` for findings with a source file)
  */
-export function checkText(r, file) {
+export function checkText(r, file, options = {}) {
+  const location = options.location ?? lineLocation;
   const out = [`${file}`];
   out.push(...summaryLines(r).map((l) => `  ${l}`));
   const s = r.summary;
   out.push(`  ${s.errors} error(s), ${s.warnings} warning(s), ${s.infos} note(s)`, "");
   const tag = { error: "ERROR", warning: "WARN ", info: "INFO " };
   for (const f of r.findings) {
-    out.push(`${tag[f.severity]} ${f.id}${f.line ? `  (line ${f.line})` : ""}`);
+    out.push(`${tag[f.severity]} ${f.id}${location(f)}`);
     out.push(`      ${f.message}`);
     out.push(`      at ${f.path}`);
   }

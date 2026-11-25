@@ -23,6 +23,7 @@ in RViz, Gazebo and ros2_control, and show its structure.
 
 Usage:
   urdf-inspector check <robot.urdf> [--json] [--strict]
+  urdf-inspector <robot.urdf>      the same as check
   urdf-inspector tree <robot.urdf>
   urdf-inspector fk <robot.urdf> [--joint name=value ...] [--json]
   urdf-inspector export-mecanum <robot.urdf> [--out config.toml]
@@ -47,6 +48,8 @@ The input must be plain URDF: run xacro first. Nothing is uploaded anywhere.
 `;
 
 class UsageError extends Error {}
+
+const COMMANDS = ["check", "tree", "fk", "export-mecanum"];
 
 /**
  * @param {string[]} argv
@@ -101,6 +104,9 @@ function run(argv, io) {
     io.out(`${VERSION}\n`);
     return EXIT.ok;
   }
+  // A lone file argument (a .urdf or .xml file, or a path) means "check it".
+  if (positionals.length === 1 && /\.(urdf|xml)$|[\\/]/i.test(positionals[0]))
+    positionals.unshift("check");
   const [cmd, file, ...extra] = positionals;
   if (cmd === undefined) {
     io.out(HELP);
@@ -111,8 +117,7 @@ function run(argv, io) {
       io.out(`${c.severity.padEnd(7)} ${c.group.padEnd(11)} ${id.padEnd(27)} ${c.title}\n`);
     return EXIT.ok;
   }
-  if (!["check", "tree", "fk", "export-mecanum"].includes(cmd))
-    throw new UsageError(`unknown command '${cmd}'`);
+  if (!COMMANDS.includes(cmd)) throw new UsageError(`unknown command '${cmd}'`);
   if (file === undefined) throw new UsageError(`${cmd} needs a URDF file`);
   if (extra.length > 0) throw new UsageError(`unexpected argument '${extra[0]}'`);
 
