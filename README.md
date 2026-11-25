@@ -44,7 +44,7 @@ what the file describes.
   reader in Node.
 - **Unexpanded xacro is detected** (`xacro:` elements, `${...}`, `$(...)`)
   and reported with every location, asking you to run xacro first.
-- **72 checks** with severity, element path (and source line in the CLI) and
+- **73 checks** with severity, element path (and source line in the CLI) and
   an explanation: tree structure, REP 105 frame names, joint axes and limits,
   mimic, inertia validity (positive definiteness, triangle inequality,
   comparison with the solid-body inertia of the link's shape), links Gazebo
@@ -270,6 +270,7 @@ for `mecanum ik --vx 0.2`, which gave 5.0 rad/s on all four wheels
 
 ```text
 urdf-inspector check <robot.urdf> [--json] [--strict]
+urdf-inspector <robot.urdf>      the same as check
 urdf-inspector tree <robot.urdf>
 urdf-inspector fk <robot.urdf> [--joint name=value ...] [--json]
 urdf-inspector export-mecanum <robot.urdf> [--out config.toml]
@@ -286,7 +287,7 @@ export), **3** usage or file error.
 ```json
 {
   "tool": "urdf-inspector",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "file": "examples/arm_2dof.urdf",
   "summary": {
     "name": "example_arm_2dof",
@@ -424,6 +425,7 @@ Every check, its threshold and its source is described in
 | `collision-missing` Visual geometry without collision geometry               | warning  | Gazebo and MoveIt only use <collision>. A link that is visible but has no collision passes through the floor and through obstacles in planning.                                                                                                                                                                                         |
 | `mesh-scheme` Mesh filename that will not resolve everywhere                 | warning  | package:// and file:// are the URI forms that both RViz and Gazebo with the ROS integration resolve. Relative paths depend on the working directory of whichever process loads the model, http(s) needs network access at load time and is not supported everywhere, and model:// is a Gazebo convention that RViz does not understand. |
 | `mesh-format` Mesh format not commonly supported                             | warning  | RViz and Gazebo load STL, COLLADA (.dae) and OBJ reliably; other formats may load in one tool and not in the other.                                                                                                                                                                                                                     |
+| `mesh-missing` Mesh file not found                                           | warning  | RViz and Gazebo show nothing for a mesh they cannot load. Reported only when the caller can look files up (inspectXml's meshExists option), for example a browser that was given the package folder.                                                                                                                                    |
 | `mesh-scale` Mesh scale zero or negative                                     | error    | A zero scale collapses the mesh. A negative scale mirrors it and flips its normals, which breaks lighting and can turn collision meshes inside out.                                                                                                                                                                                     |
 
 **ros2_control, Gazebo, transmissions**
@@ -484,7 +486,7 @@ src/core/                   DOM-free, deterministic, tested under Node
   urdf.js                   URDF model reader, xacro detection
   tree.js                   kinematic tree, structural findings
   math.js                   vectors, rotations (rpy, axis-angle), Jacobi eigenvalues
-  fk.js                     forward kinematics, mimic, mass and centre of mass
+  fk.js                     forward kinematics, joint frames, mimic, mass and centre of mass
   inertia.js                validity tests, solid-primitive reference inertia
   wheels.js                 wheel detection, measurement, mecanum TOML export
   checks/*.js               the checks, one module per group
@@ -507,6 +509,28 @@ tree the CLI builds with `src/core/xml.js`, so both run identical checks
 boxes, cylinders and spheres into polygons, projects them with a
 perspective orbit camera and draws them far to near with flat shading on a
 2D canvas.
+
+### Using the core as a library
+
+`src/core` is plain ES modules with no DOM or Node APIs. Since 0.2.0
+`package.json` has an `exports` map naming the public modules
+(`urdf-inspector/inspect`, `/xml`, `/urdf`, `/tree`, `/fk`, `/math`,
+`/inertia`, `/wheels`, `/findings`, `/report`, `/version`); other files may
+change without notice. Additions in 0.2.0 (requested by
+[Robot Studio](https://github.com/projectbin07-stack/robot-studio), which
+vendors the core):
+
+- `inspectXml(root, { meshExists })` / `inspectText(text, { meshExists })`:
+  a callback that looks a mesh filename up and returns `true` or the reason
+  it is missing; each missing mesh becomes a `mesh-missing` warning. The CLI
+  does not pass one.
+- `XmlElement.source` (optional): a producer that merged several files, such
+  as a xacro expander, can say which file an element came from; every finding
+  then gets the `source` of its top-level element.
+- `checkText(report, file, { location })`: format where a finding is (default
+  `lineLocation`, `  (line N)`).
+- `jointFrames(tree, q)` in `fk.js`: root-frame pose of every joint frame
+  (parent link pose times the joint origin), where the joint axis is constant.
 
 ## Tests
 

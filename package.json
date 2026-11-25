@@ -1,10 +1,24 @@
 {
   "name": "urdf-inspector",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Check a URDF for the mistakes that make robots misbehave in RViz, Gazebo and ros2_control, and see its kinematic structure.",
   "license": "MIT",
   "type": "module",
+  "exports": {
+    "./xml": "./src/core/xml.js",
+    "./urdf": "./src/core/urdf.js",
+    "./tree": "./src/core/tree.js",
+    "./fk": "./src/core/fk.js",
+    "./math": "./src/core/math.js",
+    "./inertia": "./src/core/inertia.js",
+    "./wheels": "./src/core/wheels.js",
+    "./findings": "./src/core/findings.js",
+    "./inspect": "./src/core/inspect.js",
+    "./report": "./src/core/report.js",
+    "./version": "./src/core/version.js",
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=22"
   },

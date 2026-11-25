@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-25
+
+Library additions requested by Robot Studio (its upstream requests 2 to 6;
+ecosystem audit findings 35 and 51). Existing results are unchanged: no
+check that ran in 0.1.1 reports anything different.
+
+### Added
+
+- `exports` map in `package.json` naming the public core modules.
+- `mesh-missing` warning (73 checks): `inspectXml` and `inspectText` take an
+  optional `meshExists(filename)` callback that returns `true` or the reason
+  the mesh was not found. Without it (the CLI) nothing is looked up.
+- Optional `source` on `XmlElement` and on `Finding`: when the input elements
+  carry the file they came from, each finding gets the file of its top-level
+  element.
+- `checkText(report, file, { location })` formats a finding's location
+  (default `lineLocation`, the old `  (line N)`).
+- `jointFrames(tree, q, poses?)` in `fk.js`: the root-frame pose of each
+  joint frame.
+- The CLI treats a lone `.urdf` / `.xml` file or path argument as `check`
+  (`urdf-inspector robot.urdf`); other unknown words are still an unknown
+  command.
+
 ## [0.1.1] - 2026-11-24
 
 ### Fixed
@@ -58,5 +81,6 @@ RViz or Gazebo across a wide set of real robot descriptions.
 - Four example URDFs written for this project (mecanum base, two-joint arm,
   differential-drive base, deliberately broken robot).
 
+[0.2.0]: https://github.com/projectbin07-stack/urdf-inspector/releases/tag/v0.2.0
 [0.1.1]: https://github.com/projectbin07-stack/urdf-inspector/releases/tag/v0.1.1
 [0.1.0]: https://github.com/projectbin07-stack/urdf-inspector/releases/tag/v0.1.0
