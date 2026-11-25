@@ -61,11 +61,65 @@ function summarise(findings, extra) {
 }
 
 /**
+ * @typedef {object} InspectOptions
+ * @property {(filename: string) => true | string} [meshExists] Look a mesh
+ *   filename up (as written in the URDF). Return true when it exists, or the
+ *   reason it was not found; each missing mesh becomes a `mesh-missing`
+ *   warning. Without it no file is looked up.
+ */
+
+/**
+ * The file of the top-level element a finding's path starts with, or of the
+ * root element.
+ * @param {import("./xml.js").XmlElement} root
+ * @returns {(path: string) => string | undefined}
+ */
+function sourceLookup(root) {
+  /** @type {Map<string, string | undefined>} */
+  const byKey = new Map();
+  for (const c of root.children) {
+    const n = c.attrs.name ?? c.attrs.reference;
+    const key = `${c.name}|${n}`;
+    if (n !== undefined && !byKey.has(key)) byKey.set(key, c.source);
+  }
+  return (path) => {
+    const m = /^\/robot\/([^[/]+)\[@(?:name|reference)='((?:[^']|&apos;)*)'\]/.exec(path);
+    const s = m ? byKey.get(`${m[1]}|${m[2].replace(/&apos;/g, "'")}`) : undefined;
+    return s ?? root.source;
+  };
+}
+
+/**
+ * Whether any element of the tree carries a source file.
+ * @param {import("./xml.js").XmlElement} el
+ * @returns {boolean}
+ */
+const hasSource = (el) => el.source !== undefined || el.children.some(hasSource);
+
+/**
  * Inspect an already-parsed XML tree (from parseXml or DOMParser).
  * @param {import("./xml.js").XmlElement} root
+ * @param {InspectOptions} [options]
  * @returns {Report}
  */
-export function inspectXml(root) {
+export function inspectXml(root, options = {}) {
+  const report = inspectTree(root, options);
+  if (hasSource(root)) {
+    const sourceOf = sourceLookup(root);
+    for (const f of report.findings) {
+      const s = sourceOf(f.path);
+      if (s !== undefined) f.source = s;
+    }
+  }
+  return report;
+}
+
+/**
+ * @param {import("./xml.js").XmlElement} root
+ * @param {InspectOptions} options
+ * @returns {Report}
+ */
+function inspectTree(root, options) {
   const { robot, findings: input } = readUrdf(root);
   if (!robot) {
     const findings = sortFindings(input);
@@ -82,6 +136,7 @@ export function inspectXml(root) {
     ...checkGeometry(ctx),
     ...checkIntegration(ctx),
     ...checkWheels(ctx),
+    ...missingMeshes(robot, options.meshExists),
   ]);
   /** @type {Record<string, number>} */
   const jointTypes = {};
@@ -105,11 +160,41 @@ export function inspectXml(root) {
 }
 
 /**
+ * @param {import("./urdf.js").Robot} robot
+ * @param {InspectOptions["meshExists"]} exists
+ * @returns {Finding[]}
+ */
+function missingMeshes(robot, exists) {
+  /** @type {Finding[]} */
+  const out = [];
+  if (!exists) return out;
+  for (const link of robot.links)
+    for (const kind of /** @type {const} */ (["visual", "collision"]))
+      for (const s of kind === "visual" ? link.visuals : link.collisions) {
+        if (s.geometry?.type !== "mesh" || s.geometry.filename === "") continue;
+        const r = exists(s.geometry.filename);
+        if (r === true) continue;
+        out.push(
+          finding(
+            "mesh-missing",
+            "warning",
+            `${kind} mesh '${s.geometry.filename}' of link '${link.name}' was not found: ${r}`,
+            s.path,
+            { kind: "link", name: link.name },
+            link.line,
+          ),
+        );
+      }
+  return out;
+}
+
+/**
  * Parse and inspect URDF source text with the built-in XML reader.
  * @param {string} text
+ * @param {InspectOptions} [options]
  * @returns {Report}
  */
-export function inspectText(text) {
+export function inspectText(text, options = {}) {
   let root;
   try {
     root = parseXml(text);
@@ -120,5 +205,5 @@ export function inspectText(text) {
     ];
     return { robot: null, context: null, findings, summary: summarise(findings, {}) };
   }
-  return inspectXml(root);
+  return inspectXml(root, options);
 }

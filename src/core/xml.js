@@ -16,6 +16,9 @@
  * @property {XmlElement[]} children child elements in document order
  * @property {string} text concatenated character data directly inside this element
  * @property {number} line 1-based line of the start tag, 0 when unknown (DOMParser)
+ * @property {string} [source] file the element came from, when the producer
+ *   knows it (for example a xacro expander that merged several files); the
+ *   built-in reader leaves it unset
  */
 
 export class XmlError extends Error {

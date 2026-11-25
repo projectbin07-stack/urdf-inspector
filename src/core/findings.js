@@ -13,6 +13,8 @@
  * @property {{ kind: "robot" | "link" | "joint" | "material" | "element", name: string }} target
  * @property {number} line 1-based source line, 0 when unknown
  * @property {Record<string, unknown>} [data] machine-readable extras (reference inertia, ...)
+ * @property {string} [source] file that defined the element, set by inspectXml
+ *   when the input elements carry a `source`
  */
 
 /**
@@ -385,6 +387,12 @@ export const CHECKS = {
     severity: "warning",
     title: "Mesh format not commonly supported",
     why: "RViz and Gazebo load STL, COLLADA (.dae) and OBJ reliably; other formats may load in one tool and not in the other.",
+  },
+  "mesh-missing": {
+    group: "geometry",
+    severity: "warning",
+    title: "Mesh file not found",
+    why: "RViz and Gazebo show nothing for a mesh they cannot load. Reported only when the caller can look files up (inspectXml's meshExists option), for example a browser that was given the package folder.",
   },
   "mesh-scale": {
     group: "geometry",

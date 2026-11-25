@@ -62,7 +62,7 @@ const camera = (/** @type {string} */ rpy) =>
   );
 const OPTICAL_RPY = "-1.5707963267948966 0 -1.5707963267948966";
 
-/** @type {Record<string, { fail: string, pass: string }>} */
+/** @type {Record<string, { fail: string, pass: string, options?: import("../src/core/inspect.js").InspectOptions }>} */
 const CASES = {
   "xml-syntax": { fail: '<robot name="t"><link name="a"></robot>', pass: robot(BASE) },
   "not-urdf": { fail: '<sdf version="1.6"><model name="m"/></sdf>', pass: robot(BASE) },
@@ -400,6 +400,14 @@ const CASES = {
     fail: meshLink('<mesh filename="package://my_robot/meshes/base.step"/>'),
     pass: meshLink('<mesh filename="package://my_robot/meshes/base.dae"/>'),
   },
+  // The caller looks files up; only package://r/present.stl "exists".
+  "mesh-missing": {
+    fail: meshLink('<mesh filename="package://r/absent.stl"/>'),
+    pass: meshLink('<mesh filename="package://r/present.stl"/>'),
+    options: {
+      meshExists: (/** @type {string} */ f) => f === "package://r/present.stl" || "no such file",
+    },
+  },
   "mesh-scale": {
     fail: meshLink('<mesh filename="package://r/m.stl" scale="0.001 0 0.001"/>'),
     pass: meshLink('<mesh filename="package://r/m.stl" scale="0.001 0.001 0.001"/>'),
@@ -480,11 +488,12 @@ test("the table covers every check in the catalogue", () => {
 
 for (const [id, c] of Object.entries(CASES)) {
   test(`${id}: reported on the failing model, absent from the passing one`, () => {
-    const failIds = ids(c.fail);
+    const opts = c.options ?? {};
+    const failIds = inspectText(c.fail, opts).findings.map((f) => f.id);
     assert.ok(failIds.includes(id), `${id} missing; got ${failIds.join(", ")}`);
-    const passIds = ids(c.pass);
+    const passIds = inspectText(c.pass, opts).findings.map((f) => f.id);
     assert.ok(!passIds.includes(id), `${id} reported on the passing model`);
-    const f = inspectText(c.fail).findings.find((x) => x.id === id);
+    const f = inspectText(c.fail, opts).findings.find((x) => x.id === id);
     assert.ok(f && f.message.length > 0 && f.path.startsWith("/"));
     // Catalogue severity is the most severe level a check uses.
     const rank = { error: 0, warning: 1, info: 2 };
