@@ -99,6 +99,26 @@ export function forwardKinematics(tree, q = {}) {
 }
 
 /**
+ * Root-frame pose of every joint frame (the parent link's pose times the
+ * joint origin) at positions q. A joint's axis is constant in this frame:
+ * its root-frame direction is the frame's rotation times the axis. Joints
+ * whose parent is not reachable from the root are left out.
+ * @param {KinTree} tree
+ * @param {Record<string, number>} [q] joint positions in rad or m
+ * @param {Map<string, Transform>} [poses] link poses from forwardKinematics(tree, q), if already computed
+ * @returns {Map<string, Transform>}
+ */
+export function jointFrames(tree, q = {}, poses = forwardKinematics(tree, q)) {
+  /** @type {Map<string, Transform>} */
+  const out = new Map();
+  for (const j of tree.joints.values()) {
+    const parent = poses.get(j.parent);
+    if (parent) out.set(j.name, compose(parent, fromXyzRpy(j.origin.xyz, j.origin.rpy)));
+  }
+  return out;
+}
+
+/**
  * Total mass and centre of mass in the root frame. Links without an
  * inertial or with a non-positive or missing mass contribute nothing.
  * @param {KinTree} tree
